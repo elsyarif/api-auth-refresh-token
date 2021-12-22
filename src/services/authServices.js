@@ -1,12 +1,53 @@
+import pkg from '@prisma/client';
+const { PrismaClient } = pkg;
+const prisma = new PrismaClient()
+import bcryptjs from "bcryptjs"
+
 class userService{
 
     async find(params){}
 
-    async get(id, params){}
+    async get(id){
+        try {
+            const user = prisma.users.findUnique({
+                where:{
+                    email: id
+                }
+            })
+            return user
+        } catch (error) {
+            return error
+        }
+    }
 
-    async create(data, params){}
+    async create(data){
+        try {
+            const user = await prisma.users.create({
+                data: data
+            })
 
-    async update(id, data, params){}
+            return user
+        } catch (error) {
+            throw new Error(error)
+        }
+    }
+
+    async updateToken(id, data){
+        try {
+            const update = await prisma.users.update({
+                where: {
+                    id: id
+                },
+                data: {
+                    refresh_token: data
+                },
+            })
+
+            return update
+        } catch (error) {
+            throw new Error(error)
+        }
+    }
 
     async patch(id, data, params){}
     

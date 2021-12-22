@@ -7,6 +7,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
 import { notFound, errorHandler } from './middleware/error.js'
+import router from "./routes/index.js";
 
 const app = express()
 const PORT = process.env.PORT || 5000;
@@ -29,7 +30,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended : false}))
 app.use(cors())
 // use routes 
-
+app.use(router)
 // error handler
 app.use(notFound);
 app.use(errorHandler);
