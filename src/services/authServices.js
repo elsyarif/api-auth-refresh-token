@@ -20,6 +20,19 @@ class userService{
         }
     }
 
+    async getByID(id){
+        try {
+            const user = prisma.users.findUnique({
+                where:{
+                    id: id
+                }
+            })
+            return user
+        } catch (error) {
+            return error
+        }
+    }
+
     async create(data){
         try {
             const user = await prisma.users.create({
