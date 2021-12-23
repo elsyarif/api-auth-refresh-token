@@ -1,8 +1,10 @@
 import asyncHandler from 'express-async-handler'
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import generateToken from "../utils/generateToken.js";
 
 import authService from '../services/authServices.js'
+const users = new authService()
 
 export const signup = asyncHandler(async(req, res) => {
     try {
@@ -78,11 +80,16 @@ export const signin = asyncHandler(async(req, res) => {
 export const signout = asyncHandler(async(req, res) => {
     try {
         const refreshToken = req.cookies['x-refresh-token']
-        
+        if(!refreshToken) return res.status(204)
         // check refresh token di !database ? retrun 204
+        const user = await users.getToken(refreshtoken);
+        if(!user) return res.status(204)
 
         // jika ada update refresh token jadikan null
+        const updateToken = await user.updateToken(user.id, null)
         res.clearCookie('x-refresh-token');
+
+        res.status(200)
     } catch (error) {
         throw new Error(error.message);
     }
@@ -90,10 +97,22 @@ export const signout = asyncHandler(async(req, res) => {
 
 export const refreshToken = asyncHandler(async(req, res) => {
     try {
-        const refreshToken = req.cookies['x-refresh-token']
+        const users = new authService()
         // cek !refreshtoken ? return 401 
+        const refreshtoken = req.cookies['x-refresh-token']
         // cek refreshtoken di !database ? return 403
+        const user = await users.getToken(refreshtoken);
+        if(!user) return res.status(401)
         // membuat accesstoken yg baru
+        jwt.verify(refreshtoken, process.env.JWT_REFRESH_TOKEN, (err, decoded)=>{
+            if(err) return res.status(403)
+
+            const accessToken = generateToken(user.id, process.env.JWT_ACCESS_TOKEN, '15s')
+
+            res.json({
+                accessToken
+            })
+        })
         // return accesstoken 
     } catch (error) {
         throw new Error(error.message);

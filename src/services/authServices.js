@@ -51,7 +51,32 @@ class userService{
 
     async patch(id, data, params){}
     
-    async remove(id, params){}
+    async remove(id){
+        try {
+            const user = await prisma.users.remove({
+                where: {
+                    id: id
+                }
+            })
+
+            return user
+        } catch (error) {
+            throw new Error(error)
+        }
+    }
+
+    async getToken(token){
+        try {
+            const user = prisma.users.findUnique({
+                where:{
+                    refresh_token: token
+                }
+            })
+            return user
+        } catch (error) {
+            throw new Error(error)
+        }
+    }
 }
 
 export default userService
