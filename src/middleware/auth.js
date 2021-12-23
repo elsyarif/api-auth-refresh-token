@@ -11,7 +11,7 @@ export const protec = asyncHandler(async(req, res, next) =>{
         try {
             token = req.headers.authorization.split(' ')[1]
             // verifikasi token 
-            const {error, decoded} = await jwt.verify(token, process.env.JWT_ACCESS_TOKEN)
+            const  decoded = await jwt.verify(token, process.env.JWT_ACCESS_TOKEN)
             // cek user untuk mengambil data yg di butuhkan dar table users
             const user = await users.getByID(decoded.id)
 
