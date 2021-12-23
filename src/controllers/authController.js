@@ -3,21 +3,19 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import generateToken from "../utils/generateToken.js";
 
+import Response from '../utils/response.js'
 import authService from '../services/authServices.js'
+
 const users = new authService()
 
-export const signup = asyncHandler(async(req, res) => {
+export const signup = asyncHandler(async(req, res, next) => {
     try {
         const { ...data } = req.body;
         const salt = await bcrypt.genSalt(10);
-        const user = new authService()
-
+        
         // check singup user exist ? return status 403
-        const exist = await user.get(data.email);
-        if(exist) return res.status(403).json({
-            statusCode : 403,
-            message: "email sudah terdaftar"
-        })
+        const exist = await users.get(data.email);
+        if(exist) return Response.Json(null, Response.HTTP_FORBIDDEN, 'Email sudah terdaftar', res);
         
         const usercreate = await user.create({
             username: data.username,
@@ -26,11 +24,7 @@ export const signup = asyncHandler(async(req, res) => {
         });
 
         if(usercreate){
-            res.status(201).json({
-                statusCode: 201,
-                message:"berhasil register",
-                data: usercreate
-            })
+            Response.Json(usercreate, Response.HTTP_CREATED, 'Berhasil Register', res);
         }
     } catch (error) {
         throw new Error(error.message);
@@ -40,38 +34,36 @@ export const signup = asyncHandler(async(req, res) => {
 export const signin = asyncHandler(async(req, res) => {
     try {
         const { email, password } = req.body;
-        const user = new authService()
+        
         // check username exist
-        const rep = await user.get(email);
-        if(!rep) return res.status(403).json({
-            statusCode : 403,
-            message: "email tidak terdaftar"
-        })
+        const rep = await users.get(email);
+        if(!rep) return Response.Json(null, Response.HTTP_BAD_REQUEST, 'Email tidak terdaftar', res)
+
         // verify password
         const verifyPass = bcrypt.compareSync(password, rep.password);
-        if(!verifyPass) return res.status(403).json(
-            {statusCode : 403,
-            message: "password salah"
-        })
+        if(!verifyPass) return Response.Json(null, Response.HTTP_BAD_REQUEST, 'Password Salah', res)
+
         // create access token & refresh token 
         const accessToken = generateToken(rep.id, process.env.JWT_ACCESS_TOKEN, '15s');
         // simpan refreshToken ke dalam database
-        const refreshToken = generateToken(rep.id, process.env.JWT_REFRESH_TOKEN, '15s');
+        const refreshToken = generateToken(rep.id, process.env.JWT_REFRESH_TOKEN, '1d');
 
-        const updateToken = await user.updateToken(rep.id, refreshToken)
+        const updateToken = await users.updateToken(rep.id, refreshToken)
 
+        console.log(process.env.NODE_ENV)
         // set res.cookies
         res.cookie('x-refresh-token', refreshToken,{
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000,
-            // secure: process.env.NODE_ENV === 'development' ? false : true
+            secure: process.env.NODE_ENV !== 'development' ? true : false
         });
         // response json
-        res.status(200).json({
-            statusCode: 200,
-            message: "berhsil login",
-            data: rep
-        })
+        Response.Json({
+            id: rep.id,
+            username: rep.username,
+            email: rep.email,
+            accessToken: accessToken
+        }, Response.HTTP_OK, 'Berhasil Login', res)
     } catch (error) {
         throw new Error(error.message);
     }
@@ -80,16 +72,17 @@ export const signin = asyncHandler(async(req, res) => {
 export const signout = asyncHandler(async(req, res) => {
     try {
         const refreshToken = req.cookies['x-refresh-token']
-        if(!refreshToken) return res.status(204)
+        if(!refreshToken) return Response.Json(null, Response.HTTP_FORBIDDEN, res)
+
         // check refresh token di !database ? retrun 204
-        const user = await users.getToken(refreshtoken);
-        if(!user) return res.status(204)
+        const user = await users.getToken(refreshToken);
+        if(!user) return Response.Json(null, Response.HTTP_FORBIDDEN, res)
 
         // jika ada update refresh token jadikan null
-        const updateToken = await user.updateToken(user.id, null)
+        const updateToken = await users.updateToken(user.id, null)
         res.clearCookie('x-refresh-token');
 
-        res.status(200)
+        Response.Json(null, Response.HTTP_OK, "Berhasil Logout", res)
     } catch (error) {
         throw new Error(error.message);
     }

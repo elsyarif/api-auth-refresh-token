@@ -1,17 +1,16 @@
 import pkg from '@prisma/client';
 const { PrismaClient } = pkg;
 const prisma = new PrismaClient()
-import bcryptjs from "bcryptjs"
 
 class userService{
 
     async find(params){}
 
-    async get(id){
+    async get(email){
         try {
             const user = prisma.users.findUnique({
                 where:{
-                    email: id
+                    email: email
                 }
             })
             return user
@@ -80,7 +79,7 @@ class userService{
 
     async getToken(token){
         try {
-            const user = prisma.users.findUnique({
+            const user = prisma.users.findFirst({
                 where:{
                     refresh_token: token
                 }
