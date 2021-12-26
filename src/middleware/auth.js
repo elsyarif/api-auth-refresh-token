@@ -10,6 +10,10 @@ export const protec = asyncHandler(async(req, res, next) =>{
     if(req.headers.authorization && req.headers.authorization.startsWith('Bearer')){
         try {
             token = req.headers.authorization.split(' ')[1]
+            if(token === 'null'){
+                res.status(406)
+                next(Error("Token invalid"));
+            }
             // verifikasi token 
             const  decoded = await jwt.verify(token, process.env.JWT_ACCESS_TOKEN)
             // cek user untuk mengambil data yg di butuhkan dar table users
@@ -23,6 +27,7 @@ export const protec = asyncHandler(async(req, res, next) =>{
 
             next();
         } catch (error) {
+            res.status(403)
             next(error)
         }
     }

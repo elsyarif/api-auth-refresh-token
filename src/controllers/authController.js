@@ -48,9 +48,8 @@ export const signin = asyncHandler(async(req, res) => {
         // simpan refreshToken ke dalam database
         const refreshToken = generateToken(rep.id, process.env.JWT_REFRESH_TOKEN, '1d');
 
-        const updateToken = await users.updateToken(rep.id, refreshToken)
+        await users.createUserToken(req.cookies['x-refresh-token'], {user_id: rep.id, refresh_token: refreshToken, ip:req.ip})
 
-        console.log(process.env.NODE_ENV)
         // set res.cookies
         res.cookie('x-refresh-token', refreshToken,{
             httpOnly: true,
@@ -69,38 +68,52 @@ export const signin = asyncHandler(async(req, res) => {
     }
 })
 
-export const signout = asyncHandler(async(req, res) => {
+export const signout = asyncHandler(async(req, res, next) => {
     try {
         const refreshToken = req.cookies['x-refresh-token']
-        if(!refreshToken) return Response.Json(null, Response.HTTP_FORBIDDEN, res)
+        if(refreshToken === null || undefined) {
+            res.status(403);
+            next(Error('Token invalid'))
+        }
 
         // check refresh token di !database ? retrun 204
         const user = await users.getToken(refreshToken);
-        if(!user) return Response.Json(null, Response.HTTP_FORBIDDEN, res)
+        if(user === null || undefined) {
+            res.status(403); 
+            next(Error('Token invalid'))
+        }
 
+        res.clearCookie('x-refresh-token', {maxAge: 0, expires : new Date() })
         // jika ada update refresh token jadikan null
-        const updateToken = await users.updateToken(user.id, null)
-        res.clearCookie('x-refresh-token');
+        await users.removeUserToken(refreshToken, null)
 
         Response.Json(null, Response.HTTP_OK, "Berhasil Logout", res)
     } catch (error) {
-        throw new Error(error.message);
+        res.status(403)
+        next(error)
     }
 })
 
-export const refreshToken = asyncHandler(async(req, res) => {
+export const refreshToken = asyncHandler(async(req, res, next) => {
     try {
-        const users = new authService()
         // cek !refreshtoken ? return 401 
         const refreshtoken = req.cookies['x-refresh-token']
+        if(!refreshtoken) {
+            res.status(406)
+            next(Error('Token refresh invalid'))
+        }
+
         // cek refreshtoken di !database ? return 403
         const user = await users.getToken(refreshtoken);
-        if(!user) return res.status(401)
+        if(!user) { 
+            res.status(401) 
+            next(Error('Token access invalid'))
+        }
         // membuat accesstoken yg baru
         jwt.verify(refreshtoken, process.env.JWT_REFRESH_TOKEN, (err, decoded)=>{
             if(err) return res.status(403)
 
-            const accessToken = generateToken(user.id, process.env.JWT_ACCESS_TOKEN, '15s')
+            const accessToken = generateToken(user.user_id, process.env.JWT_ACCESS_TOKEN, '15s')
 
             res.json({
                 accessToken

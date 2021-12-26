@@ -9,10 +9,20 @@ datasource db {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model users {
-  id            Int      @id @default(autoincrement())
-  username      String   @db.VarChar(30)
-  email         String   @unique
-  password      String   @db.VarChar(65)
-  refresh_token String?  @db.VarChar(140)
-  isactive      Boolean?
+  id       Int      @id @default(autoincrement())
+  username String   @db.VarChar(30)
+  email    String   @unique
+  password String   @db.VarChar(65)
+  isactive Boolean?
+}
+
+model user_tokens {
+  id            String    @id @db.Char(36)
+  user_id       Int
+  refresh_token String    @db.VarChar(140)
+  ip            String    @db.VarChar(20)
+  create_at     DateTime? @db.DateTime(0)
+  update_at     DateTime? @db.DateTime(0)
+
+  @@index([refresh_token, user_id], map: "user_tokens_refresh_tokens_IDX")
 }

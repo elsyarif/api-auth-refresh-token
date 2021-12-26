@@ -8,6 +8,9 @@ class userService{
        try {
         const user = prisma.users.findUnique({
             where: {id:id}
+            ,select : {
+                id: true,email: true,username: true,isactive: true
+            }
         })
 
         return user
