@@ -26,3 +26,34 @@ model user_tokens {
 
   @@index([refresh_token, user_id], map: "user_tokens_refresh_tokens_IDX")
 }
+
+model Roles {
+	id			  Int		@id @default(autoincrement())
+	role_name	String	@db.VarChar(35)
+	descripsi	String	@db.VarChar(100)
+}
+
+model Permission {
+	id				      Int		  @id @default(autoincrement())
+	Permission_name	String	@db.VarChar(35)
+	descripsi		    String	@db.VarChar(100)
+}
+
+model Modules {
+	id			Int		@id	@default(autoincrement())
+	title 		String	@db.VarChar(35)
+	link		String	@db.VarChar(50)
+	icon		String	@db.VarChar(35)
+	parent_id	Int		@default(0)
+	order		Int		
+}
+
+model Permission_module {
+	id				  Int		@id @default(autoincrement())
+	user_id			Int
+	Module_id		Int
+	access			Boolean
+	create			Boolean
+	update			Boolean
+	delete			Boolean
+}
