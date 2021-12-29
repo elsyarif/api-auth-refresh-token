@@ -57,12 +57,15 @@ export const signin = asyncHandler(async(req, res) => {
             secure: process.env.NODE_ENV !== 'development' ? true : false
         });
         // response json
-        Response.Json({
-            id: rep.id,
-            username: rep.username,
-            email: rep.email,
+        res.status(200).json({
+            statusCode: 200,
+            message: "Login Berhasil",
+            data: {
+                email: rep.email,
+                username: rep.username,
+            },
             accessToken: accessToken
-        }, Response.HTTP_OK, 'Berhasil Login', res)
+        })
     } catch (error) {
         throw new Error(error.message);
     }
@@ -115,8 +118,8 @@ export const refreshToken = asyncHandler(async(req, res, next) => {
 
             const accessToken = generateToken(user.user_id, process.env.JWT_ACCESS_TOKEN, '15s')
 
-            res.json({
-                accessToken
+            res.status(200).json({
+                accessToken: accessToken
             })
         })
         // return accesstoken 
