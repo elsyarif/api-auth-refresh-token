@@ -30,5 +30,30 @@ class roleService{
         }
     }
 
-    
+    async updateRole(id, data){
+        try {
+            const role = await prisma.Roles.update({
+                data : data,
+                where: {
+                    id:id
+                }
+            })
+            return role
+        } catch (error) {
+            throw new Error(error) 
+        }
+    }
+
+    async deleteRole(id){
+        try {
+            const role = await prisma.Roles.delete({
+                where: {
+                    id : id
+                }
+            })
+            return role
+        } catch (error) {
+            throw new Error(error) 
+        }
+    }
 }
