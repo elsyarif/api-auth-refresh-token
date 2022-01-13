@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import corsOptions from "./config/cors.js";
 
 import { notFound, errorHandler } from './middleware/error.js'
 import router from "./routes/index.js";
@@ -28,7 +29,7 @@ const io =  new socket.Server(server, {
 app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({extended : false}))
-app.use(cors())
+app.use(cors(corsOptions))
 // use routes 
 app.use(router)
 // error handler
